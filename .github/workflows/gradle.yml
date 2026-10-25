@@ -15,15 +15,13 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android platform
+      - name: Install Android SDK packages
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Check project
-        run: |
-          echo "Android SDK ready"
-          find . -maxdepth 3 -type f
+      - name: Build BABA AI APK
+        run: gradle assembleDebug
