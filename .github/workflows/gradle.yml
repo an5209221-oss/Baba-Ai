@@ -28,10 +28,20 @@ jobs:
           yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses
           "$SDKMANAGER" --sdk_root="$ANDROID_HOME" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
+            - name: Check Android files
+        run: |
+          pwd
+          git branch --show-current
+          git ls-tree -r --name-only HEAD | grep -i 'AndroidManifest.xml' || true
+          ls -la app/src/main || true
+
       - name: Build BABA AI APK
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon assembleDebug
+        
+        
+          
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
