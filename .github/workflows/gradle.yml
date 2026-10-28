@@ -35,7 +35,7 @@ jobs:
           git ls-tree -r --name-only HEAD | grep -i 'AndroidManifest.xml' || true
           ls -la app/src/main || true
 
-            - name: Check and create AndroidManifest
+                  - name: Check and create AndroidManifest
   run: |
           mkdir -p app/src/main
           cat > app/src/main/AndroidManifest.xml <<'EOF'
