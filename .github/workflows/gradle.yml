@@ -36,7 +36,7 @@ jobs:
           ls -la app/src/main || true
 
             - name: Check and create AndroidManifest
-        run: |
+  run: |
           mkdir -p app/src/main
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
