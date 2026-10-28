@@ -3,12 +3,18 @@ name: Build BABA AI APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
       - name: Download project
@@ -20,54 +26,53 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Check project files
+        run: |
+          echo "Checking project files..."
+          pwd
+          ls -la
+          echo "Checking Gradle wrapper..."
+          test -f gradlew
+          echo "Checking app folder..."
+          test -d app
+
       - name: Install Android SDK packages
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: Android SDK manager not found."
+            exit 1
+          fi
+
           echo "Using SDK manager: $SDKMANAGER"
-          test -x "$SDKMANAGER"
-          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
-      - name: Check Android files
+          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses || true
+
+          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "platform-tools"
+
+      - name: Check Android manifest
         run: |
-          pwd
-          git branch --show-current
-          git ls-tree -r --name-only HEAD | grep -i 'AndroidManifest.xml' || true
-          ls -la app/src/main || true
+          if [ ! -f app/src/main/AndroidManifest.xml ]; then
+            echo "ERROR: AndroidManifest.xml is missing."
+            echo "Please add the correct Android manifest to the project."
+            exit 1
+          fi
 
-                  - name: Check and create AndroidManifest
-  run: |
-          mkdir -p app/src/main
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <application
-                  android:label="BABA AI"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
-                  android:allowBackup="false">
-                  <activity
-                      android:name="com.babaai.app.MainActivity"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-          ls -l app/src/main/AndroidManifest.xml
+          echo "AndroidManifest.xml found."
 
       - name: Build BABA AI APK
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon assembleDebug
-        
-          
-          
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: BABA-AI-APK
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
